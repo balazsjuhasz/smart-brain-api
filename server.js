@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcrypt-nodejs');
 const cors = require('cors');
 const knex = require('knex');
+const { json } = require('express');
 
 const db = knex({
   client: 'pg',
@@ -77,17 +78,16 @@ app.post('/register', (req, res) => {
 })
 
 app.get('/profile/:id', (req, res) => {
-  const { id } = req.params;
-  let found = false;
-  database.users.forEach(user => {
-    if (user.id === id) {
-      found = true;
-      return res.json(user);
-    }
-  })
-  if (!found) {
-    res.status(400).json('no such user');
-  }
+  const { id } = req.params
+  db.select('*').from('users').where({ id })
+    .then(user => {
+      if (user.length) {
+        res.json(user[0]);
+      } else {
+        res.status(400).json('not found');
+      }
+    })
+    .catch(err => res.status(400).json('error getting user'));
 })
 
 app.put('/image', (req, res) => {
@@ -101,7 +101,7 @@ app.put('/image', (req, res) => {
     }
   })
   if (!found) {
-    res.status(400).json('no such user');
+    res.status(400).json('not found');
   }
 })
 
